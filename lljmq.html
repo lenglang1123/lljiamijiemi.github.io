@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>冷狼文本加密解密器</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 900px;
+            padding: 30px;
+        }
+        
+        .stats {
+            background: #f0f7ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            resize: vertical;
+            min-height: 200px;
+            font-family: monospace;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        button {
+            flex: 1;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .encrypt-btn {
+            background: linear-gradient(to right, #667eea, #764ba2);
+            color: white;
+        }
+        
+        .decrypt-btn {
+            background: linear-gradient(to right, #4CAF50, #2E7D32);
+            color: white;
+        }
+        
+        .example-btn {
+            background: linear-gradient(to right, #FF9800, #F57C00);
+            color: white;
+            flex: 0.5;
+        }
+        
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .progress {
+            width: 100%;
+            height: 10px;
+            background: #e0e0e0;
+            border-radius: 5px;
+            margin: 20px 0;
+            overflow: hidden;
+            display: none;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(to right, #4CAF50, #8BC34A);
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .result-header h3 {
+            color: #2c3e50;
+            margin: 0;
+        }
+        
+        .copy-btn {
+            background: #5a67d8;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s;
+        }
+        
+        .copy-btn:hover {
+            background: #4c51bf;
+            transform: translateY(-2px);
+        }
+        
+        .copy-btn.copied {
+            background: #48bb78;
+        }
+        
+        #resultText {
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            line-height: 1.5;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 14px;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background: #4CAF50;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transform: translateX(100px);
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        
+        .notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 style="text-align: center; color: #2c3e50;">冷狼牌大文本加密解密器</h1>
+        <h6 style="text-align: center; color: #ccc;">夏天夏天悄悄过去留下小秘密，压心底压心底不要告诉你~</h6>
+        
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-value" id="charCount">0</div>
+                <div class="stat-label">字符数</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="byteCount">0</div>
+                <div class="stat-label">字节数</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="status">就绪</div>
+                <div class="stat-label">状态</div>
+            </div>
+        </div>
+        
+        <div class="warning" id="sizeWarning" style="display: none;">
+            ⚠️ 文本较大（超过500KB），加密可能需要较长时间。建议拆分处理。
+        </div>
+        
+        <textarea id="inputText" placeholder="在此输入需要加密或解密的文本..."></textarea>
+        
+        <div class="button-group">
+            <button class="encrypt-btn" onclick="encryptText()" id="encryptBtn">
+                🔒 加密
+            </button>
+            <button class="decrypt-btn" onclick="decryptText()" id="decryptBtn">
+                🔓 解密
+            </button>
+            <button class="example-btn" onclick="loadExample()">
+                📋 示例
+            </button>
+        </div>
+        
+        <div class="progress" id="progressBar">
+            <div class="progress-bar" id="progressBarFill"></div>
+        </div>
+        
+        <div class="result" id="resultContainer" style="display: none;">
+            <div class="result-header">
+                <h3>结果：</h3>
+                <button class="copy-btn" onclick="copyResult()" id="copyResultBtn">
+                    <span id="copyIcon">📋</span>
+                    <span id="copyText">复制结果</span>
+                </button>
+            </div>
+            <div id="resultText"></div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification">
+        <span id="notificationText">已复制到剪贴板！</span>
+    </div>
+
+    <script>
+        const FIXED_KEY = "text-encryption-tool-2024-no-password-required";
+        const MAX_SIZE = 5 * 1024 * 1024; // 5MB 安全限制
+        
+        // 显示通知
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notificationText');
+            
+            // 设置消息和样式
+            notificationText.textContent = message;
+            
+            if (type === 'success') {
+                notification.style.background = '#4CAF50';
+            } else if (type === 'error') {
+                notification.style.background = '#f44336';
+            } else if (type === 'warning') {
+                notification.style.background = '#FF9800';
+            }
+            
+            // 显示通知
+            notification.classList.add('show');
+            
+            // 3秒后自动隐藏
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // 更新复制按钮状态
+        function updateCopyButton(isCopied = false) {
+            const copyBtn = document.getElementById('copyResultBtn');
+            const copyIcon = document.getElementById('copyIcon');
+            const copyText = document.getElementById('copyText');
+            
+            if (isCopied) {
+                copyBtn.classList.add('copied');
+                copyIcon.textContent = '✓';
+                copyText.textContent = '已复制';
+                
+                // 2秒后恢复原状
+                setTimeout(() => {
+                    copyBtn.classList.remove('copied');
+                    copyIcon.textContent = '📋';
+                    copyText.textContent = '复制结果';
+                }, 2000);
+            } else {
+                copyBtn.classList.remove('copied');
+                copyIcon.textContent = '📋';
+                copyText.textContent = '复制结果';
+            }
+        }
+        
+        // 复制结果到剪贴板
+        async function copyResult() {
+            const resultText = document.getElementById('resultText').textContent;
+            
+            if (!resultText || resultText === '正在处理中...') {
+                showNotification('没有内容可复制', 'warning');
+                return;
+            }
+            
+            try {
+                await navigator.clipboard.writeText(resultText);
+                updateCopyButton(true);
+                showNotification('✅ 结果已复制到剪贴板！');
+            } catch (err) {
+                console.error('复制失败:', err);
+                showNotification('❌ 复制失败，请手动复制', 'error');
+                
+                // 备用方案：使用document.execCommand
+                const textarea = document.createElement('textarea');
+                textarea.value = resultText;
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    updateCopyButton(true);
+                    showNotification('✅ 结果已复制到剪贴板！');
+                } catch (execErr) {
+                    showNotification('❌ 复制失败，请手动选择文本复制', 'error');
+                }
+                document.body.removeChild(textarea);
+            }
+        }
+        
+        // 更新统计信息
+        function updateStats() {
+            const text = document.getElementById('inputText').value;
+            const charCount = text.length;
+            const byteCount = new Blob([text]).size;
+            
+            document.getElementById('charCount').textContent = charCount.toLocaleString();
+            document.getElementById('byteCount').textContent = (byteCount / 1024).toFixed(1) + ' KB';
+            
+            // 显示大小警告
+            const warning = document.getElementById('sizeWarning');
+            if (byteCount > 500 * 1024) {
+                warning.style.display = 'block';
+                document.getElementById('encryptBtn').disabled = byteCount > MAX_SIZE;
+                document.getElementById('decryptBtn').disabled = byteCount > MAX_SIZE;
+            } else {
+                warning.style.display = 'none';
+                document.getElementById('encryptBtn').disabled = false;
+                document.getElementById('decryptBtn').disabled = false;
+            }
+            
+            // 更新状态
+            if (byteCount > MAX_SIZE) {
+                document.getElementById('status').innerHTML = '<span style="color: red;">过大</span>';
+            } else if (isEncryptedText(text)) {
+                document.getElementById('status').innerHTML = '<span style="color: blue;">密文</span>';
+            } else {
+                document.getElementById('status').textContent = '原文';
+            }
+        }
+        
+        // 判断是否是加密文本
+        function isEncryptedText(text) {
+            if (!text) return false;
+            
+            // Base64格式检测
+            try {
+                const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
+                const isBase64 = base64Regex.test(text) && text.length % 4 === 0;
+                return isBase64 && text.length > 50;
+            } catch {
+                return false;
+            }
+        }
+        
+        // 显示进度条
+        function showProgress() {
+            const progressBar = document.getElementById('progressBar');
+            const progressFill = document.getElementById('progressBarFill');
+            progressBar.style.display = 'block';
+            progressFill.style.width = '30%';
+        }
+        
+        // 更新进度
+        function updateProgress(percent) {
+            const progressFill = document.getElementById('progressBarFill');
+            progressFill.style.width = percent + '%';
+        }
+        
+        // 隐藏进度条
+        function hideProgress() {
+            setTimeout(() => {
+                const progressBar = document.getElementById('progressBar');
+                progressBar.style.display = 'none';
+                document.getElementById('progressBarFill').style.width = '0%';
+            }, 500);
+        }
+        
+        // 加载示例文本
+        function loadExample() {
+            const exampleText = `这是一个示例文本。
+
+第二行文本。
+
+第三行文本。
+
+加密解密测试。
+
+支持中文、英文、数字和特殊符号：!@#$%^&*()
+
+试试加密这段文本，看看效果如何？`;
+            
+            document.getElementById('inputText').value = exampleText;
+            updateStats();
+            showNotification('📋 已加载示例文本', 'success');
+        }
+        
+        // AES加密函数
+        async function aesEncrypt(text, password) {
+            try {
+                updateProgress(40);
+                const encoder = new TextEncoder();
+                const passwordKey = await crypto.subtle.importKey(
+                    'raw',
+                    encoder.encode(password),
+                    { name: 'PBKDF2' },
+                    false,
+                    ['deriveBits', 'deriveKey']
+                );
+                
+                updateProgress(60);
+                const salt = crypto.getRandomValues(new Uint8Array(16));
+                const iv = crypto.getRandomValues(new Uint8Array(12));
+                
+                const key = await crypto.subtle.deriveKey(
+                    {
+                        name: 'PBKDF2',
+                        salt: salt,
+                        iterations: 100000,
+                        hash: 'SHA-256'
+                    },
+                    passwordKey,
+                    { name: 'AES-GCM', length: 256 },
+                    false,
+                    ['encrypt']
+                );
+                
+                updateProgress(80);
+                const encrypted = await crypto.subtle.encrypt(
+                    {
+                        name: 'AES-GCM',
+                        iv: iv
+                    },
+                    key,
+                    encoder.encode(text)
+                );
+                
+                updateProgress(90);
+                const encryptedBytes = new Uint8Array(encrypted);
+                const combined = new Uint8Array(salt.length + iv.length + encryptedBytes.length);
+                combined.set(salt);
+                combined.set(iv, salt.length);
+                combined.set(encryptedBytes, salt.length + iv.length);
+                
+                updateProgress(100);
+                return btoa(String.fromCharCode(...combined));
+                
+            } catch (error) {
+                throw error;
+            }
+        }
+        
+        // AES解密函数
+        async function aesDecrypt(encryptedBase64, password) {
+            try {
+                updateProgress(30);
+                const combined = new Uint8Array(
+                    atob(encryptedBase64).split('').map(c => c.charCodeAt(0))
+                );
+                
+                updateProgress(50);
+                const salt = combined.slice(0, 16);
+                const iv = combined.slice(16, 28);
+                const encrypted = combined.slice(28);
+                
+                const encoder = new TextEncoder();
+                const passwordKey = await crypto.subtle.importKey(
+                    'raw',
+                    encoder.encode(password),
+                    { name: 'PBKDF2' },
+                    false,
+                    ['deriveKey']
+                );
+                
+                updateProgress(70);
+                const key = await crypto.subtle.deriveKey(
+                    {
+                        name: 'PBKDF2',
+                        salt: salt,
+                        iterations: 100000,
+                        hash: 'SHA-256'
+                    },
+                    passwordKey,
+                    { name: 'AES-GCM', length: 256 },
+                    false,
+                    ['decrypt']
+                );
+                
+                updateProgress(90);
+                const decrypted = await crypto.subtle.decrypt(
+                    {
+                        name: 'AES-GCM',
+                        iv: iv
+                    },
+                    key,
+                    encrypted
+                );
+                
+                updateProgress(100);
+                return new TextDecoder().decode(decrypted);
+                
+            } catch (error) {
+                throw error;
+            }
+        }
+        
+        // 加密文本
+        async function encryptText() {
+            const inputText = document.getElementById('inputText').value;
+            const byteCount = new Blob([inputText]).size;
+            
+            if (!inputText.trim()) {
+                showNotification('❌ 请输入要加密的文本', 'error');
+                return;
+            }
+            
+            if (byteCount > MAX_SIZE) {
+                showNotification(`❌ 文本过大（${(byteCount/1024/1024).toFixed(1)}MB），最大支持5MB`, 'error');
+                return;
+            }
+            
+            try {
+                // 禁用按钮，显示进度
+                document.getElementById('encryptBtn').disabled = true;
+                document.getElementById('decryptBtn').disabled = true;
+                showProgress();
+                
+                // 显示处理中
+                document.getElementById('resultText').textContent = '正在处理中...';
+                document.getElementById('resultContainer').style.display = 'block';
+                
+                const startTime = Date.now();
+                const encrypted = await aesEncrypt(inputText, FIXED_KEY);
+                const endTime = Date.now();
+                
+                // 显示结果
+                const resultText = document.getElementById('resultText');
+                resultText.textContent = encrypted;
+                
+                // 重置复制按钮状态
+                updateCopyButton(false);
+                
+                // 计算并显示统计
+                const encryptTime = (endTime - startTime) / 1000;
+                const originalKB = (byteCount / 1024).toFixed(1);
+                const encryptedKB = (new Blob([encrypted]).size / 1024).toFixed(1);
+                
+                showNotification(`✅ 加密成功！耗时 ${encryptTime.toFixed(2)} 秒，结果已就绪`, 'success');
+                
+            } catch (error) {
+                document.getElementById('resultText').textContent = `错误：${error.message}`;
+                showNotification('❌ 加密失败：' + error.message, 'error');
+            } finally {
+                // 恢复按钮，隐藏进度
+                document.getElementById('encryptBtn').disabled = false;
+                document.getElementById('decryptBtn').disabled = false;
+                hideProgress();
+                updateStats();
+            }
+        }
+        
+        // 解密文本
+        async function decryptText() {
+            const inputText = document.getElementById('inputText').value.trim();
+            const byteCount = new Blob([inputText]).size;
+            
+            if (!inputText) {
+                showNotification('❌ 请输入要解密的密文', 'error');
+                return;
+            }
+            
+            if (byteCount > MAX_SIZE) {
+                showNotification(`❌ 密文过大（${(byteCount/1024/1024).toFixed(1)}MB），最大支持5MB`, 'error');
+                return;
+            }
+            
+            try {
+                // 禁用按钮，显示进度
+                document.getElementById('encryptBtn').disabled = true;
+                document.getElementById('decryptBtn').disabled = true;
+                showProgress();
+                
+                // 显示处理中
+                document.getElementById('resultText').textContent = '正在处理中...';
+                document.getElementById('resultContainer').style.display = 'block';
+                
+                const startTime = Date.now();
+                const decrypted = await aesDecrypt(inputText, FIXED_KEY);
+                const endTime = Date.now();
+                
+                // 显示结果
+                const resultText = document.getElementById('resultText');
+                resultText.textContent = decrypted;
+                
+                // 重置复制按钮状态
+                updateCopyButton(false);
+                
+                // 计算并显示统计
+                const decryptTime = (endTime - startTime) / 1000;
+                
+                showNotification(`✅ 解密成功！耗时 ${decryptTime.toFixed(2)} 秒，结果已就绪`, 'success');
+                
+            } catch (error) {
+                document.getElementById('resultText').textContent = `错误：${error.message}`;
+                showNotification('❌ 解密失败：' + error.message, 'error');
+            } finally {
+                // 恢复按钮，隐藏进度
+                document.getElementById('encryptBtn').disabled = false;
+                document.getElementById('decryptBtn').disabled = false;
+                hideProgress();
+                updateStats();
+            }
+        }
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            const textarea = document.getElementById('inputText');
+            
+            // 加载示例文本
+            loadExample();
+            
+            // 监听输入
+            textarea.addEventListener('input', updateStats);
+            
+            // 添加键盘快捷键
+            textarea.addEventListener('keydown', function(e) {
+                // Ctrl+E 加密
+                if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+                    e.preventDefault();
+                    encryptText();
+                }
+                // Ctrl+D 解密
+                if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+                    e.preventDefault();
+                    decryptText();
+                }
+                // Ctrl+L 加载示例
+                if ((e.ctrlKey || e.metaKey) && e.key === 'l') {
+                    e.preventDefault();
+                    loadExample();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
