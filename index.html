@@ -1721,6 +1721,45 @@
         
         // ================= 通用功能 =================
         
+        // function showResult(content, mode, processTime, inputMode) {
+        //     document.getElementById('processType').textContent = mode === 'encrypt' ? '加密' : '解密';
+        //     document.getElementById('processTime').textContent = processTime + ' 秒';
+        //     document.getElementById('resultSize').textContent = content.length.toLocaleString() + ' 字符';
+        //     document.getElementById('inputMode').textContent = inputMode === 'text' ? '文本输入' : '文件上传';
+            
+        //     const resultContent = document.getElementById('resultContent');
+        //     const previewText = content.length > 1000 ? 
+        //         content.substring(0, 1000) + '...' : content;
+        //     resultContent.textContent = previewText;
+            
+        //     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+        //     const url = URL.createObjectURL(blob);
+            
+        //     const downloadLink = document.getElementById('downloadLink');
+        //     downloadLink.href = url;
+            
+        //     let fileName = 'result.txt';
+        //     if (inputMode === 'file' && currentFile) {
+        //         const originalName = currentFile.name.replace('.txt', '');
+        //         const timestamp = new Date().getTime();
+        //         fileName = `${originalName}_${mode === 'encrypt' ? 'encrypted' : 'decrypted'}_${timestamp}.txt`;
+        //     } else {
+        //         const timestamp = new Date().getTime();
+        //         fileName = `${mode === 'encrypt' ? 'encrypted' : 'decrypted'}_${timestamp}.txt`;
+        //     }
+            
+        //     downloadLink.download = fileName;
+        //     downloadLink.textContent = `⬇️ 下载 ${fileName}`;
+            
+        //     const copyBtn = document.getElementById('copyResultBtn');
+        //     copyBtn.textContent = '📋 复制结果';
+        //     copyBtn.classList.remove('copied');
+            
+        //     const resultArea = document.getElementById('resultArea');
+        //     resultArea.classList.add('show');
+            
+        //     resultArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        // }
         function showResult(content, mode, processTime, inputMode) {
             document.getElementById('processType').textContent = mode === 'encrypt' ? '加密' : '解密';
             document.getElementById('processTime').textContent = processTime + ' 秒';
@@ -1728,10 +1767,20 @@
             document.getElementById('inputMode').textContent = inputMode === 'text' ? '文本输入' : '文件上传';
             
             const resultContent = document.getElementById('resultContent');
-            const previewText = content.length > 1000 ? 
-                content.substring(0, 1000) + '...' : content;
-            resultContent.textContent = previewText;
             
+            // 根据输入模式决定显示方式
+            if (inputMode === 'text') {
+                // === 修改这里：文本模式显示全部内容 ===
+                resultContent.textContent = content;  // 直接显示完整内容
+                
+            } else {
+                // 文件模式：只显示前1000字符预览（保持不变）
+                const previewText = content.length > 1000 ? 
+                    content.substring(0, 1000) + '...' : content;
+                resultContent.textContent = previewText;
+            }
+            
+            // 其他代码保持不变...
             const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             
@@ -1760,7 +1809,6 @@
             
             resultArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
-        
         function copyResult() {
             const resultText = document.getElementById('resultContent').textContent;
             
